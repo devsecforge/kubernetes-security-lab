@@ -1,0 +1,7 @@
+# kube-linter config — scans the hardened manifests. The intentionally-insecure
+# sample lives under manifests/insecure/ and is excluded from the gating scan.
+checks:
+  addAllBuiltIn: true
+  exclude:
+    - "unset-cpu-requirements"   # limits are set; requirements-vs-limits noise
+customChecks: []

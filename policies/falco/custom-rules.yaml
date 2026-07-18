@@ -1,0 +1,39 @@
+# Custom Falco rules — runtime threat detection for the secure-demo workloads.
+# Load alongside Falco's default ruleset. These catch behaviour that static scanning can't.
+
+- macro: secure_demo_ns
+  condition: k8s.ns.name = "secure-demo"
+
+- rule: Shell spawned in secure-demo container
+  desc: A shell was executed inside a container in the secure-demo namespace (possible intrusion).
+  condition: >
+    spawned_process and container and secure_demo_ns
+    and proc.name in (bash, sh, zsh, ash, dash)
+  output: >
+    Shell spawned in secure-demo (user=%user.name container=%container.name
+    image=%container.image.repository proc=%proc.cmdline)
+  priority: WARNING
+  tags: [container, shell, mitre_execution]
+
+- rule: Write below root filesystem in secure-demo
+  desc: Attempt to write outside expected writable mounts (readOnlyRootFilesystem bypass attempt).
+  condition: >
+    open_write and container and secure_demo_ns
+    and not fd.name startswith /tmp
+    and not fd.name startswith /var/cache/nginx
+    and not fd.name startswith /var/run
+  output: >
+    Unexpected write in secure-demo (file=%fd.name container=%container.name
+    proc=%proc.cmdline)
+  priority: ERROR
+  tags: [filesystem, mitre_persistence]
+
+- rule: Outbound connection to non-DNS port from secure-demo
+  desc: Egress attempt that the NetworkPolicy should already block — defense in depth.
+  condition: >
+    outbound and container and secure_demo_ns
+    and not fd.sport in (53) and not fd.dport in (53)
+  output: >
+    Unexpected egress from secure-demo (connection=%fd.name container=%container.name)
+  priority: NOTICE
+  tags: [network, mitre_exfiltration]

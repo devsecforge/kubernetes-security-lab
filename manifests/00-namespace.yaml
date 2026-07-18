@@ -1,0 +1,13 @@
+# Namespace with Pod Security Admission (PSA) enforced at the "restricted" level.
+# This is the single most effective cluster-native guardrail: it blocks privileged,
+# root, and host-namespace pods from ever being admitted to this namespace.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: secure-demo
+  labels:
+    # Enforce the restricted Pod Security Standard; also audit & warn.
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

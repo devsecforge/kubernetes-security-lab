@@ -1,0 +1,41 @@
+# ⚠️  INTENTIONALLY INSECURE — FOR CONTRAST/TRAINING ONLY. DO NOT DEPLOY TO PROD.
+# The PSA "restricted" label on the secure-demo namespace will REJECT this pod —
+# that rejection is the lesson. Scanners (trivy config, kube-linter) should flag
+# every issue commented below.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-insecure
+  namespace: secure-demo
+  labels:
+    app: web-insecure
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-insecure
+  template:
+    metadata:
+      labels:
+        app: web-insecure
+    spec:
+      hostNetwork: true          # ❌ shares host network namespace
+      hostPID: true              # ❌ shares host process namespace
+      containers:
+        - name: web
+          image: nginx:latest    # ❌ mutable 'latest' tag, runs as root
+          securityContext:
+            privileged: true             # ❌ full host access
+            allowPrivilegeEscalation: true  # ❌
+            runAsUser: 0                 # ❌ root
+            capabilities:
+              add: ["SYS_ADMIN", "NET_ADMIN"]  # ❌ dangerous caps
+          # ❌ no resource limits (noisy-neighbor / DoS risk)
+          # ❌ no probes, no read-only root FS
+          volumeMounts:
+            - name: host-root
+              mountPath: /host    # ❌ mounts the host filesystem
+      volumes:
+        - name: host-root
+          hostPath:
+            path: /               # ❌ full host FS access

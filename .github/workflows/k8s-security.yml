@@ -1,0 +1,57 @@
+name: K8s Security
+
+# Validates and security-scans Kubernetes manifests on every change.
+# kubeconform = schema validity · kube-linter + Trivy = security posture.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  validate:
+    name: Schema validation (kubeconform)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kubeconform
+        run: |
+          curl -sSLo kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz
+          tar xf kubeconform.tar.gz && sudo mv kubeconform /usr/local/bin/
+      - name: Validate manifests
+        run: kubeconform -strict -summary -ignore-missing-schemas manifests/
+
+  kube-linter:
+    name: Security lint (kube-linter)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: kube-linter scan (hardened manifests must pass)
+        uses: stackrox/kube-linter-action@v1
+        with:
+          directory: manifests
+          # The insecure sample is expected to fail; exclude it from the gating scan.
+          config: .kube-linter.yaml
+
+  trivy-config:
+    name: Misconfig scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy config scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: config
+          scan-ref: manifests
+          severity: HIGH,CRITICAL
+          format: sarif
+          output: trivy-k8s.sarif
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-k8s.sarif

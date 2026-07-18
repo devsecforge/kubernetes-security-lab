@@ -1,0 +1,21 @@
+# Scan outputs
+*.sarif
+reports/
+*.log
+
+# Kube / local
+kubeconfig
+*.kubeconfig
+.kube/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Secrets
+*.pem
+*.key
+.env
+.env.*
