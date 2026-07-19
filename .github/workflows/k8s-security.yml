@@ -19,7 +19,7 @@ jobs:
     name: Schema validation (kubeconform)   # blocking gate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install kubeconform
         run: |
           curl -sSLo kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz
@@ -31,7 +31,7 @@ jobs:
     name: Security lint (kube-linter, report)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: kube-linter scan
         continue-on-error: true   # insecure sample is expected to flag; report, don't fail
         uses: stackrox/kube-linter-action@v1
@@ -43,7 +43,7 @@ jobs:
     name: Misconfig scan (Trivy, report)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install Trivy
         run: |
           curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz -o trivy.tar.gz
