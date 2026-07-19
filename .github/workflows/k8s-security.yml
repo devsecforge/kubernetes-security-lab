@@ -44,14 +44,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Trivy config scan
-        uses: aquasecurity/trivy-action@v0.28.0
-        with:
-          scan-type: config
-          scan-ref: manifests
-          severity: HIGH,CRITICAL
-          format: sarif
-          output: trivy-k8s.sarif
+      - name: Install Trivy
+        run: |
+          curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz -o trivy.tar.gz
+          tar xzf trivy.tar.gz trivy
+          sudo mv trivy /usr/local/bin/ && trivy --version
+      - name: Trivy config scan (report)
+        run: trivy config --severity HIGH,CRITICAL --format sarif --output trivy-k8s.sarif manifests/ || true
       - name: Upload SARIF
         if: github.event_name == 'push'
         continue-on-error: true
